@@ -1,9 +1,10 @@
 import unittest
 
-from keewee import KeeWee
+from src.keewee import KeeWee
 
 
 class Employee:
+    name = KeeWee()
     skill_level = KeeWee()
 
     def __init__(self, name: str, skill_level: int):
@@ -22,6 +23,7 @@ class MyTestCase(unittest.TestCase):
         andrew.skill_level = 1
         self.assertEqual(andrew.skill_level, 1)
 
+        # KeeWee.dumpd()
         KeeWee.dump(file_name="andrea.json")
 
 

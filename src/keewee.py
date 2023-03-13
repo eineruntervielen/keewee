@@ -2,6 +2,7 @@ from __future__ import annotations
 import json
 import datetime as dt
 import inspect
+from collections import defaultdict
 from typing import overload, cast
 
 
@@ -20,8 +21,7 @@ class KeeWee:
     def __set_name__(self, owner: type[object], name: str) -> None:
         self.public_name = name
         self.private_name = '_' + name
-        self._store[owner.__name__] = {}
-        self._store[owner.__name__][name] = {}
+        self._store[owner.__name__] = defaultdict(defaultdict)
 
     def __set__(self, obj: object, value: int) -> None:
         obj.__dict__[self.private_name] = value

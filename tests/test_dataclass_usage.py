@@ -1,12 +1,12 @@
 import unittest
 from dataclasses import dataclass, field
 
-from keewee import KeeWee
+from src import KeeWee
 
 
 @dataclass
 class PokemonTrainer:
-    name: str
+    name: str | KeeWee = field(default=KeeWee())
     skill_level: int | KeeWee = field(default=KeeWee(), repr=False)
 
 
@@ -22,6 +22,7 @@ class MyTestCase(unittest.TestCase):
         self.assertEqual(andrew.skill_level, 1)
 
         ash = PokemonTrainer(name="Ash Ketchum", skill_level=0)
+        ash.name = "Erik"
 
         import random
         for _ in range(4):
@@ -29,7 +30,7 @@ class MyTestCase(unittest.TestCase):
 
         add_1(andrew)
         self.assertEqual(andrew.skill_level, 2)
-        print(KeeWee.dump("test.json"))
+        print(KeeWee.dump("tests.json"))
 
     def test_for_readme(self):
         import random
