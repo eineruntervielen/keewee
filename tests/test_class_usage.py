@@ -16,7 +16,6 @@ class Employee:
 
 
 class MyTestCase(unittest.TestCase):
-
     def test_something(self):
         andrew = Employee(name="Andrea Taylor", skill_level=0)
         self.assertEqual(andrew.skill_level, 0)
@@ -27,5 +26,5 @@ class MyTestCase(unittest.TestCase):
         KeeWee.dump(file_name="andrea.json")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     unittest.main()
