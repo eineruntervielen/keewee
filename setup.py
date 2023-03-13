@@ -9,5 +9,13 @@ setup(
     description="Useful descriptor for shadow stat collections",
     long_description=long_description,
     package_dir={"": "keewee"},
-    packages=find_packages(where="keewee")
+    packages=find_packages(where="keewee"),
+    url="https://github.com/eineruntervielen/keewee",
+    author="Erik J Kostic",
+    license="GNU GPLv3",
+    classifiers=[
+        "Development Status :: 3 - Alpha",
+        "Programming Language :: Python :: 3.10",
+        "Operating System :: OS Independent",
+    ]
 )

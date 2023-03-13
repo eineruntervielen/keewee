@@ -1,5 +1,5 @@
-# KeeWee
-
+# KeeWee 🥝
+Useful descriptor for recording and statistic generation.
 ## Example:
 
 Just define your Python classes or dataclasses as you would normally do.  
@@ -15,7 +15,7 @@ from keewee import KeeWee
 @dataclass
 class PokemonTrainer:
     name: str
-    skill_level: int = field(default=KeeWee(), repr=False)
+    skill_level: int | KeeWee = field(default=KeeWee(), repr=False)
 ```
 
 A commong usage would look like
