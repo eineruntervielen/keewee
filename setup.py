@@ -8,6 +8,7 @@ setup(
     version="0.0.1",
     description="Useful descriptor for shadow stat collections",
     long_description=long_description,
+    long_description_content_type="text/markdown",
     package_dir={"": "keewee"},
     packages=find_packages(where="keewee"),
     url="https://github.com/eineruntervielen/keewee",

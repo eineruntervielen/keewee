@@ -1,10 +1,12 @@
 # KeeWee 🥝
+
 Useful descriptor for recording and statistic generation.
+
 ## Example:
 
 Just define your Python classes or dataclasses as you would normally do.  
 If you are using dataclasses you should remove your shadowing fields from
-the `__repr__` as they will mess up your results in the end.
+the repr as they will mess up your results in the end.
 
 ```python
 from dataclasses import dataclass, field
@@ -18,7 +20,7 @@ class PokemonTrainer:
     skill_level: int | KeeWee = field(default=KeeWee(), repr=False)
 ```
 
-A commong usage would look like
+A common usage would look like
 
 ```python
 
