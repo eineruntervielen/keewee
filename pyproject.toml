@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "keewee"
-version = "0.0.10"
+version = "0.0.11"
 authors = [
     { name = "Erik J Kostic" }
 ]
