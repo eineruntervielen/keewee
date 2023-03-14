@@ -1,0 +1,6 @@
+{
+  "module": "testmain",
+  "dataclasses": [
+    { "name": "Worker", "att_name": "skill_lvl", "att_type": "int" }
+  ]
+}
