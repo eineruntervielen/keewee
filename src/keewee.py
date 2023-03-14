@@ -13,6 +13,24 @@ class KeeWeeDB(dict):
         return wee
 
 
+_store: KeeWeeDB = KeeWeeDB()
+_vars = {}
+
+
+def keewee(var_name):
+    if not _store.get(var_name):
+        _store[var_name] = []
+
+    def getter():
+        return _vars.get(var_name)
+
+    def setter(value):
+        _store[var_name].append(value)
+        _vars[var_name] = value
+
+    return getter, setter
+
+
 class KeeWee:
     _store = KeeWeeDB()
 
