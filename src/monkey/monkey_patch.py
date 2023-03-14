@@ -21,7 +21,8 @@ def run_from():
 
 def monkey_patch():
     import some_app
-
+    DC_ATT_STR = "{}"
+    DC_FIELD_STR = "dataclasses.field(default=KeeWee(), repr=False)"
     patch_str = "    skill_lvl: int | KeeWee = field(default=KeeWee(), repr=False)\n"
     source_worker, _ = inspect.getsourcelines(some_app.Worker)
     source_worker[4] = patch_str

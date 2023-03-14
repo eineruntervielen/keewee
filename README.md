@@ -1,16 +1,23 @@
 # KeeWee 🥝
 
-Useful descriptor for recording and statistic generation.
+Keewee is an auxiliary class that implements the descriptor-protocol.  
+One major usecase is to record statistical data about an attribute of a class during runtime.  
+The library works with regular `Python classes` or `dataclasses`.
 
-## Example:
+## Installing
 
-Just define your Python classes or dataclasses as you would normally do.  
-If you are using dataclasses you should remove your shadowing fields from
-the repr as they will mess up your results in the end.
+Install and update using [pip](https://pypi.org/project/keewee/)
 
-```python
+````bash
+$ pip install -U keewee
+````
+
+## A Simple Example (wordless)
+
+````python
+import random
+
 from dataclasses import dataclass, field
-
 from keewee import KeeWee
 
 
@@ -18,23 +25,14 @@ from keewee import KeeWee
 class PokemonTrainer:
     name: str
     skill_level: int | KeeWee = field(default=KeeWee(), repr=False)
-```
 
-A common usage would look like
 
-```python
-
-import random
-
-ash = PokemonTrainer(name="Ash Ketchum", skill_level=0)
-
-for _ in range(10):
-    ash.skill_level = random.randint(1, 10)
-
-print(KeeWee.dumpd())
-```
-
-Result
+if __name__ == "__main__":
+    ash = PokemonTrainer(name="Ash Ketchum", skill_level=0)
+    for _ in range(10):
+        ash.skill_level = random.randint(1, 10)
+    print(KeeWee.dumpd())
+````
 
 ```python
 {'PokemonTrainer':
@@ -56,3 +54,11 @@ Result
     }
 }
 ```
+
+## A Bigger Example:
+
+...
+
+## Links
+
+- PyPI Releases: [https://pypi.org/project/keewee/](https://pypi.org/project/keewee/)

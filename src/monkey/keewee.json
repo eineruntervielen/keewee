@@ -1,6 +1,6 @@
 {
-  "module": "testmain",
-  "dataclasses": [
-    { "name": "Worker", "att_name": "skill_lvl", "att_type": "int" }
+  "dc_path": "testmain.Worker",
+  "dc_attrs": [
+    "skill_lvl"
   ]
 }
