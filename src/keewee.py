@@ -35,13 +35,14 @@ def keewee(var_name):
 MODES: dict[str, Any] = {
     "list": list(),
     "dict": dict(),
+    "set": set()
 }
 
 
 class KeeWee:
     _store = KeeWeeDB()
 
-    def __init__(self, blame: bool = False, mode: str = "dict"):
+    def __init__(self, blame: bool = False, mode: str = "list"):
         self.blame = blame
         self.mode = MODES[mode]
 
@@ -60,8 +61,14 @@ class KeeWee:
         self.record(self.mode, owner, instance_name, value)
 
     @singledispatchmethod
-    def record(self, mode, owner, instance, value):
+    def record(self, mode, owner, instance, value) -> None:
         raise NotImplementedError("Cannot record ")
+
+    @record.register
+    def _(self, mode: set, owner, instance, value) -> None:
+        if not self._store[owner][self.public_name].get(instance):
+            self._store[owner][self.public_name][instance] = set()
+        self._store[owner][self.public_name][instance].add(value)
 
     @record.register
     def _(self, mode: list, owner, instance, value):
