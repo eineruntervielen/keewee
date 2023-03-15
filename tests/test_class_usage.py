@@ -1,11 +1,12 @@
 import unittest
+from pprint import pprint
 
 from src.keewee import KeeWee
 
 
 class Employee:
     name = KeeWee()
-    skill_level = KeeWee()
+    skill_level = KeeWee(mode="list", blame=True)
 
     def __init__(self, name: str, skill_level: int):
         self.name = name
@@ -22,8 +23,7 @@ class MyTestCase(unittest.TestCase):
         andrew.skill_level = 1
         self.assertEqual(andrew.skill_level, 1)
 
-        # KeeWee.dumpd()
-        KeeWee.dump(file_name="andrea.json")
+        pprint(KeeWee.dumpd())
 
 
 if __name__ == "__main__":

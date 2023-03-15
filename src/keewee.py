@@ -2,9 +2,9 @@ from __future__ import annotations
 import json
 import datetime as dt
 import inspect
-from collections import defaultdict
 from enum import Enum
-from typing import overload, cast
+from functools import singledispatchmethod
+from typing import overload, cast, Any
 
 
 class KeeWeeDB(dict):
@@ -18,6 +18,7 @@ _vars = {}
 
 
 def keewee(var_name):
+    global _store
     if not _store.get(var_name):
         _store[var_name] = []
 
@@ -31,48 +32,48 @@ def keewee(var_name):
     return getter, setter
 
 
+MODES: dict[str, Any] = {
+    "list": list(),
+    "dict": dict(),
+}
+
+
 class KeeWee:
     _store = KeeWeeDB()
 
-    def __init__(self, blame: bool = False, mode: str | None = None):
+    def __init__(self, blame: bool = False, mode: str = "dict"):
         self.blame = blame
-        self.mode = mode
-
-    def __set__(self, obj: object, value: int) -> None:
-        # gernal set
-        obj.__dict__[self.private_name] = value
-
-        # keewee set
-
-        owner = obj.__class__.__name__
-        instance_name = str(obj)
-        if not self._store[owner][self.public_name].get(instance_name):
-            match self.mode:
-                case "list":
-                    self._store[owner][self.public_name][instance_name] = []
-                case _:
-                    self._store[owner][self.public_name][instance_name] = {}
-        if self.blame:
-            mutator = inspect.getouterframes(inspect.currentframe(), 2)[1][3]
-            self._store[owner][self.public_name][instance_name][dt.datetime.now().time().isoformat()] = (value, mutator)
-        else:
-            match self.mode:
-                case "list":
-                    self._store[owner][self.public_name][instance_name].append(value)
-                case _:
-                    self._store[owner][self.public_name][instance_name][dt.datetime.now().time().isoformat()] = value
+        self.mode = MODES[mode]
 
     def __set_name__(self, owner: type[object], name: str) -> None:
         """Does not seem to change over the mode"""
         self.public_name = name
         self.private_name = '_' + name
-        # self._store[owner.__name__] = defaultdict()
-        # match self.mode:
-        #     case "list":
-        # self._store[owner.__name__] = defaultdict()
-        # self._store[owner.__name__][self.public_name] = defaultdict(list)
-        # case _:
-        #     self._store[owner.__name__] = defaultdict(defaultdict)
+
+    def __set__(self, obj: object, value: int) -> None:
+        obj.__dict__[self.private_name] = value
+        owner = obj.__class__.__name__
+        instance_name = str(obj)
+        if self.blame:
+            value = (value, inspect.getouterframes(inspect.currentframe(), 2)[1][3])
+
+        self.record(self.mode, owner, instance_name, value)
+
+    @singledispatchmethod
+    def record(self, mode, owner, instance, value):
+        raise NotImplementedError("Cannot record ")
+
+    @record.register
+    def _(self, mode: list, owner, instance, value):
+        if not self._store[owner][self.public_name].get(instance):
+            self._store[owner][self.public_name][instance] = []
+        self._store[owner][self.public_name][instance].append(value)
+
+    @record.register
+    def _(self, mode: dict, owner, instance, value):
+        if not self._store[owner][self.public_name].get(instance):
+            self._store[owner][self.public_name][instance] = {}
+        self._store[owner][self.public_name][instance][dt.datetime.now().time().isoformat()] = value
 
     @overload
     def __get__(self, obj: None, obj_type: None) -> KeeWee:
