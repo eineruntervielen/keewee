@@ -12,7 +12,7 @@ logging.basicConfig(level=logging.DEBUG)
 
 
 def run_from():
-    with open("keewee.json", "r") as f:
+    with open("keewee.config.json", "r") as f:
         kw = json.load(f)
     testmain = importlib.import_module(kw["module"])
     print(testmain)

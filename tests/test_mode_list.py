@@ -29,7 +29,7 @@ class TestModeList(unittest.TestCase):
         self.e2.position = "WERKSTUDENT"
         for _ in range(5):
             self.e2.skill_lvl = randint(1, 10)
-        pprint(KeeWee.dump("keewee.json"))
+        pprint(KeeWee.dump("keewee.config.json"))
 
 
 if __name__ == '__main__':

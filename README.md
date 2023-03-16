@@ -55,7 +55,19 @@ if __name__ == "__main__":
 }
 ```
 
-## A Bigger Example:
+## Record Modes
+
+The different modes provide a convenient way of recording
+the properties / variables states in a concise manner.
+KeeWees default mode is set to `list` which seems to be a common use-case.  The 
+
+| Mode | int | float | bool | str | list |
+|------|-----|-------|------|-----|------|
+| list | ✅   | ✅     | ✅    | ✅   | ❌    |
+| set  | ✅   | ✅     | ✅    | ✅   | ❌    |
+| dict | ✅   | ✅     | ✅    | ✅   | ❌    |
+
+## A Bigger Example
 
 ...
 

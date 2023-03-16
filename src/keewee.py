@@ -1,10 +1,22 @@
 from __future__ import annotations
+
 import json
 import datetime as dt
 import inspect
-from enum import Enum
-from functools import singledispatchmethod
+import uuid
+import logging
+
+from functools import singledispatchmethod, singledispatch
+from pprint import pp
 from typing import overload, cast, Any
+
+logging.basicConfig(level=logging.DEBUG)
+
+MODES: dict[str, Any] = {
+    "list": list(),
+    "dict": dict(),
+    "set": set()
+}
 
 
 class KeeWeeDB(dict):
@@ -14,29 +26,43 @@ class KeeWeeDB(dict):
 
 
 _store: KeeWeeDB = KeeWeeDB()
-_vars = {}
 
 
-def keewee(var_name):
-    global _store
-    if not _store.get(var_name):
-        _store[var_name] = []
+def keewee(initial: Any, mode: str | None = None):
+    var_id: str = uuid.uuid4().hex
+    mode = MODES[mode] if mode else None
 
-    def getter():
-        return _vars.get(var_name)
+    @singledispatch
+    def record(mode, value):
+        raise NotImplementedError("Cannot record ")
+
+    @record.register
+    def _(mode: list, value):
+        logging.debug(msg="not implemented yet!!!")
 
     def setter(value):
-        _store[var_name].append(value)
-        _vars[var_name] = value
+        _store[var_id] = value
+        if mode is not None:
+            record(mode, value)
 
-    return getter, setter
+    setter(initial)
 
+    class IntProxy(int):
+        def __new__(cls, value, *args, **kwargs):
+            return super(cls, cls).__new__(cls, _store.get(var_id))
 
-MODES: dict[str, Any] = {
-    "list": list(),
-    "dict": dict(),
-    "set": set()
-}
+        def __int__(self):
+            return _store.get(var_id)
+
+        def __repr__(self) -> str:
+            return f"{int(self)}"
+
+        def __eq__(self, __o: object) -> bool:
+            return int(self) == __o
+
+    match initial:
+        case int():
+            return IntProxy(initial), setter
 
 
 class KeeWee:
@@ -56,9 +82,10 @@ class KeeWee:
         owner = obj.__class__.__name__
         instance_name = str(obj)
         if self.blame:
-            value = (value, inspect.getouterframes(inspect.currentframe(), 2)[1][3])
-
-        self.record(self.mode, owner, instance_name, value)
+            blamed_value: tuple[int, str] = (value, inspect.getouterframes(inspect.currentframe(), 2)[1][3])
+            self.record(self.mode, owner, instance_name, blamed_value)
+        else:
+            self.record(self.mode, owner, instance_name, value)
 
     @singledispatchmethod
     def record(self, mode, owner, instance, value) -> None:
@@ -95,6 +122,10 @@ class KeeWee:
         if obj is None:
             return self
         return cast(int, obj.__dict__.get(self.private_name))
+
+    @classmethod
+    def pprint(cls):
+        pp(cls._store)
 
     @classmethod
     def dump(cls, file_name: str):

@@ -1,5 +1,4 @@
 import unittest
-from pprint import pprint
 
 from src.keewee import KeeWee
 
@@ -29,7 +28,7 @@ class MyTestCase(unittest.TestCase):
 
         andrew.kids = 1
         andrew.kids = 2
-        pprint(KeeWee.dumpd())
+        KeeWee.pprint()
 
 
 if __name__ == "__main__":
