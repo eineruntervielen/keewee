@@ -6,26 +6,38 @@ import inspect
 import uuid
 import logging
 
-from functools import singledispatchmethod, singledispatch
+from functools import singledispatch
 from pprint import pp
-from typing import overload, cast, Any
+from typing import overload, cast, Any, Callable
+
+from .keewee_repo import _repo
 
 logging.basicConfig(level=logging.DEBUG)
 
-MODES: dict[str, Any] = {
-    "list": list(),
-    "dict": dict(),
-    "set": set()
+
+def rec_mode_set(kw_store: dict[str, set | None], key: str, value: Any) -> None:
+    if not kw_store.get(key):
+        kw_store[key] = set()
+    kw_store[key].add(value)
+
+
+def rec_mode_list(kw_store: dict[str, list | None], key: str, value: Any) -> None:
+    if not kw_store.get(key):
+        kw_store[key] = []
+    kw_store[key].append(value)
+
+
+def rec_mode_dtv(kw_store: dict[str, dict[dt.time.isoformat, Any] | None], key: str, value: Any) -> None:
+    if not kw_store.get(key):
+        kw_store[key] = {}
+    kw_store[key][dt.datetime.now().time().isoformat()] = value
+
+
+RECORD_MODES: dict[str, Callable[..., None]] = {
+    "list": rec_mode_list,
+    "set": rec_mode_set,
+    "dtv": rec_mode_dtv
 }
-
-
-class KeeWeeDB(dict):
-    def __missing__(self, kee):
-        wee = self[kee] = type(self)()
-        return wee
-
-
-_store: KeeWeeDB = KeeWeeDB()
 
 
 def keewee(initial: Any, mode: str | None = None):
@@ -41,7 +53,7 @@ def keewee(initial: Any, mode: str | None = None):
         logging.debug(msg="not implemented yet!!!")
 
     def setter(value):
-        _store[var_id] = value
+        _repo[var_id] = value
         if mode is not None:
             record(mode, value)
 
@@ -49,10 +61,10 @@ def keewee(initial: Any, mode: str | None = None):
 
     class IntProxy(int):
         def __new__(cls, value, *args, **kwargs):
-            return super(cls, cls).__new__(cls, _store.get(var_id))
+            return super(cls, cls).__new__(cls, _repo.get(var_id))
 
         def __int__(self):
-            return _store.get(var_id)
+            return _repo.get(var_id)
 
         def __repr__(self) -> str:
             return f"{int(self)}"
@@ -66,11 +78,16 @@ def keewee(initial: Any, mode: str | None = None):
 
 
 class KeeWee:
-    _store = KeeWeeDB()
+    """KeeWee implements the descriptor-protocol and hooks into a specific
+    recording method for keeping the state
+    """
+    _repo = _repo
 
     def __init__(self, blame: bool = False, mode: str = "list"):
         self.blame = blame
-        self.mode = MODES[mode]
+        self.record_mode = RECORD_MODES.get(mode)
+        self.public_name = ""
+        self.private_name = ""
 
     def __set_name__(self, owner: type[object], name: str) -> None:
         """Does not seem to change over the mode"""
@@ -83,31 +100,9 @@ class KeeWee:
         instance_name = str(obj)
         if self.blame:
             blamed_value: tuple[int, str] = (value, inspect.getouterframes(inspect.currentframe(), 2)[1][3])
-            self.record(self.mode, owner, instance_name, blamed_value)
+            self.record_mode(kw_store=self._repo[owner][self.public_name], key=instance_name, value=blamed_value)
         else:
-            self.record(self.mode, owner, instance_name, value)
-
-    @singledispatchmethod
-    def record(self, mode, owner, instance, value) -> None:
-        raise NotImplementedError("Cannot record ")
-
-    @record.register
-    def _(self, mode: set, owner, instance, value) -> None:
-        if not self._store[owner][self.public_name].get(instance):
-            self._store[owner][self.public_name][instance] = set()
-        self._store[owner][self.public_name][instance].add(value)
-
-    @record.register
-    def _(self, mode: list, owner, instance, value):
-        if not self._store[owner][self.public_name].get(instance):
-            self._store[owner][self.public_name][instance] = []
-        self._store[owner][self.public_name][instance].append(value)
-
-    @record.register
-    def _(self, mode: dict, owner, instance, value):
-        if not self._store[owner][self.public_name].get(instance):
-            self._store[owner][self.public_name][instance] = {}
-        self._store[owner][self.public_name][instance][dt.datetime.now().time().isoformat()] = value
+            self.record_mode(kw_store=self._repo[owner][self.public_name], key=instance_name, value=value)
 
     @overload
     def __get__(self, obj: None, obj_type: None) -> KeeWee:
@@ -124,18 +119,18 @@ class KeeWee:
         return cast(int, obj.__dict__.get(self.private_name))
 
     @classmethod
-    def pprint(cls):
-        pp(cls._store)
+    def pprint(cls) -> None:
+        pp(cls._repo)
 
     @classmethod
     def dump(cls, file_name: str):
-        with open(file_name, "w") as f:
-            json.dump(cls._store, f)
+        with open(file_name, "w", encoding="utf-8") as f:
+            json.dump(cls._repo, f)
 
     @classmethod
     def dumps(cls):
-        return json.dumps(cls._store)
+        return json.dumps(cls._repo)
 
     @classmethod
     def dumpd(cls):
-        return cls._store
+        return cls._repo

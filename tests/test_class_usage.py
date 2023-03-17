@@ -5,7 +5,7 @@ from src.keewee import KeeWee
 
 class Employee:
     skill_level = KeeWee(mode="list")
-    kids = KeeWee(mode="dict")
+    kids = KeeWee(mode="dtv")
 
     def __init__(self, name: str, skill_level: int):
         self.name = name

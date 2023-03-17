@@ -11,11 +11,12 @@ from src.keewee import KeeWee
 class Employee:
     id: str
     name: str
-    position: str = field(default=KeeWee(mode="list"), repr=False)
-    skill_lvl: int = field(default=KeeWee(mode="list"), repr=False)
+    position: str | KeeWee = field(default=KeeWee(mode="dtv"), repr=False)
+    skill_lvl: int | KeeWee = field(default=KeeWee(mode="list"), repr=False)
 
     def __repr__(self):
         return f"<{self.id}|{self.name}>"
+
 
 class TestModeList(unittest.TestCase):
 
@@ -25,11 +26,14 @@ class TestModeList(unittest.TestCase):
 
     def test_something(self):
         self.e1.position = "COO"
+        self.e1.position = "COO"
+        self.e1.position = "COO"
+        self.e1.position = "COO"
         self.e1.position = "COOL"
         self.e2.position = "WERKSTUDENT"
         for _ in range(5):
             self.e2.skill_lvl = randint(1, 10)
-        pprint(KeeWee.dump("keewee.config.json"))
+        KeeWee.pprint()
 
 
 if __name__ == '__main__':
