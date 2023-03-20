@@ -1,70 +1,104 @@
+"""Implements an autovivification dictionary for global state recording and management"""
 from __future__ import annotations
 
-import json
 import datetime as dt
 import inspect
-import uuid
+import json
 import logging
+import uuid
 
-from functools import singledispatch
 from pprint import pp
-from typing import overload, cast, Any, Callable
-
-from .keewee_repo import _repo
+from typing import overload, cast, Any, Callable, TypeAlias
 
 logging.basicConfig(level=logging.DEBUG)
 
+ISOFormat: TypeAlias = str
 
-def rec_mode_set(kw_store: dict[str, set | None], key: str, value: Any) -> None:
+
+class KeeWeeRepo(dict):
+    """Global application state repository for recording and management.
+    Implements the missing-dunder method for autovivification."""
+
+    def __missing__(self, kee):
+        wee = self[kee] = type(self)()
+        return wee
+
+
+_repo = KeeWeeRepo()
+
+
+def rec_mode_direct(kw_store: dict[str, set], key: str, value: Any) -> None:
+    """default mode that sets a value for a key into a dictionary
+
+    :param kw_store: The global KeeWee repository
+    :param key: a string key
+    :param value: any value
+    """
+    kw_store[key] = value
+
+
+def rec_mode_set(kw_store: dict[str, set], key: str, value: Any) -> None:
+    """Collects the occurring values in a set.
+
+    :param kw_store: The global KeeWee repository
+    :param key: a string key
+    :param value: any value added to a set
+    """
     if not kw_store.get(key):
         kw_store[key] = set()
     kw_store[key].add(value)
 
 
-def rec_mode_list(kw_store: dict[str, list | None], key: str, value: Any) -> None:
+def rec_mode_list(kw_store: dict[str, list], key: str, value: Any) -> None:
+    """Collects the occurring values in a list.
+
+    :param kw_store: The global KeeWee repository
+    :param key: a string key
+    :param value: any value added to a list
+    """
     if not kw_store.get(key):
         kw_store[key] = []
     kw_store[key].append(value)
 
 
-def rec_mode_dtv(kw_store: dict[str, dict[dt.time.isoformat, Any] | None], key: str, value: Any) -> None:
+def rec_mode_dtv(kw_store: dict[str, dict[ISOFormat, Any]], key: str, value: Any) -> None:
+    """Collects the occurring values in dictionary that maps the current timestamp
+    in ISO-format to the new value
+
+    :param kw_store: The global KeeWee repository
+    :param key: a string key
+    :param value: any value added to a mapping of timestamp to value
+    """
     if not kw_store.get(key):
         kw_store[key] = {}
     kw_store[key][dt.datetime.now().time().isoformat()] = value
 
 
 RECORD_MODES: dict[str, Callable[..., None]] = {
+    "direct": rec_mode_direct,
     "list": rec_mode_list,
     "set": rec_mode_set,
-    "dtv": rec_mode_dtv
+    "dtv": rec_mode_dtv  # iso-format
 }
 
 
-def keewee(initial: Any, mode: str | None = None):
-    var_id: str = uuid.uuid4().hex
-    mode = MODES[mode] if mode else None
-
-    @singledispatch
-    def record(mode, value):
-        raise NotImplementedError("Cannot record ")
-
-    @record.register
-    def _(mode: list, value):
-        logging.debug(msg="not implemented yet!!!")
+def keewee(initial: Any, name: str | None = None, mode: str = "direct"):
+    if mode != "direct":
+        raise NotImplementedError("Another mode is currently not available for the keewee-hook!")
+    name = name if name else uuid.uuid4().hex
+    rec_mode = RECORD_MODES.get(mode)
 
     def setter(value):
-        _repo[var_id] = value
-        if mode is not None:
-            record(mode, value)
+        rec_mode(_repo, name, value)
 
     setter(initial)
 
     class IntProxy(int):
         def __new__(cls, value, *args, **kwargs):
-            return super(cls, cls).__new__(cls, _repo.get(var_id))
+            return super(cls, cls).__new__(cls, _repo.get(name))
 
         def __int__(self):
-            return _repo.get(var_id)
+            return _repo.get(name)
 
         def __repr__(self) -> str:
             return f"{int(self)}"
@@ -83,9 +117,9 @@ class KeeWee:
     """
     _repo = _repo
 
-    def __init__(self, blame: bool = False, mode: str = "list"):
+    def __init__(self, mode: str, blame: bool = False):
         self.blame = blame
-        self.record_mode = RECORD_MODES.get(mode)
+        self.record_mode = RECORD_MODES.get(mode, RECORD_MODES['list'])
         self.public_name = ""
         self.private_name = ""
 
