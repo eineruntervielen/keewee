@@ -117,7 +117,7 @@ class KeeWee:
     """
     _repo = _repo
 
-    def __init__(self, mode: str, blame: bool = False):
+    def __init__(self, mode: str = "list", blame: bool = False):
         self.blame = blame
         self.record_mode = RECORD_MODES.get(mode, RECORD_MODES['list'])
         self.public_name = ""
