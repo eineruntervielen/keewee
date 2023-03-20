@@ -1,8 +1,11 @@
 # KeeWee 🥝
 
-Keewee is an auxiliary class that implements the descriptor-protocol.  
-One major usecase is to record statistical data about an attribute of a class during runtime.  
-The library works with regular `Python classes` or `dataclasses`.
+Global application **state management** and **recording**.  
+The Keewee library implements an auxiliary class that can be used to manage class and instance attributes at runtime.  
+One major usecase is to decouple your state-management from your business-logic
+and keep your code nice and concise.  
+You can also use it to record statistics about an attribute during runtime.  
+The library works with regular `Python classes` or `dataclasses` but needs little different configuration.
 
 ## Installing
 
@@ -12,7 +15,7 @@ Install and update using [pip](https://pypi.org/project/keewee/)
 $ pip install -U keewee
 ````
 
-## A Simple Example (wordless)
+## A Simple Example
 
 ````python
 import random
@@ -35,41 +38,70 @@ if __name__ == "__main__":
 ````
 
 ```python
-{'PokemonTrainer':
-    {'skill_level':
-        {"PokemonTrainer(name='Ash Ketchum')": {
-            '13:08:36.055042': 0,
-            '13:08:36.055055': 5,
-            '13:08:36.055059': 1,
-            '13:08:36.055061': 5,
-            '13:08:36.055064': 2,
-            '13:08:36.055066': 5,
-            '13:08:36.055069': 10,
-            '13:08:36.055071': 6,
-            '13:08:36.055073': 6,
-            '13:08:36.055075': 6,
-            '13:08:36.055077': 4
-        }
-        }
-    }
+{
+    'PokemonTrainer': {'skill_level': {"PokemonTrainer(name='Ash Ketchum')": [0, 5, 9, 6, 3, 6, 10, 8, 4, 2, 9]}}
 }
 ```
 
 ## Record Modes
 
-The different modes provide a convenient way of recording
-the properties / variables states in a concise manner.
-KeeWees default mode is set to `list` which seems to be a common use-case.  The 
+When assigning a KeeWee instance to an attribute,
+the user can customize its internal recording-behavior by providing the `mode`-option.
+Currently, there are four different modes, whereas the `list`-mode is the default setting.
 
-| Mode | int | float | bool | str | list |
-|------|-----|-------|------|-----|------|
-| list | ✅   | ✅     | ✅    | ✅   | ❌    |
-| set  | ✅   | ✅     | ✅    | ✅   | ❌    |
-| dict | ✅   | ✅     | ✅    | ✅   | ❌    |
+### Direct mode
 
-## A Bigger Example
+When only the current or resp. the last value is of interest, one can choose the `direct` mode,
+where the attribute is _directely_ mapped
+to its value.
 
-...
+````python
+{
+    'PokemonTrainer': {'skill_level': {"PokemonTrainer(name='Ash Ketchum')": 3}}
+}
+````
+
+### List mode
+
+The `list`-mode keeps all occurring values in an ordered list from the first to the last value this attribute was assigned.  
+Since this use-case is probably the _most_ common it is also chosen to be the *default* record-behavior.
+
+```python
+{
+    'PokemonTrainer': {'skill_level': {"PokemonTrainer(name='Ash Ketchum')": [0, 5, 9, 6, 3, 6, 10, 8, 4, 2, 9]}}
+}
+```
+
+## Set mode
+
+The `set`-modes only difference to the list-mode is that duplicates are not tracked.
+
+```python
+{
+    'PokemonTrainer': {'skill_level': {"PokemonTrainer(name='Ash Ketchum')": {0, 2, 3, 5, 7, 9}}}
+}
+```
+
+### Datetime to value
+
+If one wants to know exactly at what timestamp the modification took place the `dtv` (datetime-value)-mode is the best to choose.  
+Here a new dictionary is created for every attribute and the current time is mapped onto the state change.
+
+````python
+{'PokemonTrainer': {'skill_level': {"PokemonTrainer(name='Ash Ketchum')": {
+    '15:11:44.976976': 0,
+    '15:11:44.976985': 8,
+    '15:11:44.976987': 6,
+    '15:11:44.976990': 2,
+    '15:11:44.976992': 6,
+    '15:11:44.976994': 9,
+    '15:11:44.976996': 8,
+    '15:11:44.976998': 7,
+    '15:11:44.977000': 3,
+    '15:11:44.977002': 9,
+    '15:11:44.977004': 7
+}}}}
+````
 
 ## Links
 
