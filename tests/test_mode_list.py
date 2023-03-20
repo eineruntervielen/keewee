@@ -1,7 +1,6 @@
 import unittest
 
 from dataclasses import dataclass, field
-from pprint import pprint
 from random import randint
 
 from src.keewee import KeeWee
