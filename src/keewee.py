@@ -4,7 +4,6 @@ from __future__ import annotations
 import datetime as dt
 import inspect
 import json
-import uuid
 
 from pprint import pp
 from typing import overload, cast, Any, Callable, TypeAlias
@@ -176,31 +175,3 @@ class KeeWee:
     def dumpd(cls):
         return cls._repo
 
-
-def keewee(initial: Any, name: str | None = None, mode: str = "direct"):
-    if mode != "direct":
-        raise NotImplementedError("Another mode is currently not available for the keewee-hook!")
-    name = name if name else uuid.uuid4().hex
-    rec_mode = RECORD_MODES.get(mode)
-
-    def setter(value):
-        rec_mode(KEEWEE_REPO, name, value)
-
-    setter(initial)
-
-    class IntProxy(int):
-        def __new__(cls, value, *args, **kwargs):
-            return super(cls, cls).__new__(cls, KEEWEE_REPO.get(name))
-
-        def __int__(self):
-            return KEEWEE_REPO.get(name)
-
-        def __repr__(self) -> str:
-            return f"{int(self)}"
-
-        def __eq__(self, __o: object) -> bool:
-            return int(self) == __o
-
-    match initial:
-        case int():
-            return IntProxy(initial), setter
