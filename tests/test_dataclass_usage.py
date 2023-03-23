@@ -7,7 +7,7 @@ from src import KeeWee
 @dataclass
 class PokemonTrainer:
     name: str
-    skill_level: int | KeeWee = field(default=KeeWee(blame=True), repr=False)
+    skill_level: int | KeeWee = field(default=KeeWee(mode='dtv'), repr=False)
 
 
 class MyTestCase(unittest.TestCase):

@@ -4,13 +4,10 @@ from __future__ import annotations
 import datetime as dt
 import inspect
 import json
-import logging
 import uuid
 
 from pprint import pp
 from typing import overload, cast, Any, Callable, TypeAlias
-
-logging.basicConfig(level=logging.DEBUG)
 
 ISOFormat: TypeAlias = str
 
@@ -24,7 +21,7 @@ class KeeWeeRepo(dict):
         return wee
 
 
-_repo = KeeWeeRepo()
+KEEWEE_REPO = KeeWeeRepo()
 
 
 def rec_mode_direct(kw_store: dict[str, set], key: str, value: Any) -> None:
@@ -74,48 +71,58 @@ def rec_mode_dtv(kw_store: dict[str, dict[ISOFormat, Any]], key: str, value: Any
     kw_store[key][dt.datetime.now().time().isoformat()] = value
 
 
+def rec_mode_sum(kw_store: dict[str, int | float], key: str, value: int | float) -> None:
+    """Sums al occurring values
+
+    :param kw_store: The global KeeWee repository
+    :param key: a string key
+    :param value: numerical value
+    """
+    if kw_store.get(key) is None:
+        kw_store[key] = value
+    kw_store[key] += value
+
+
+def rec_mode_max(kw_store: dict[str, int | float], key: str, value: int | float) -> None:
+    """Stores the maximum of all occurring values
+
+    :param kw_store: The global KeeWee repository
+    :param key: a string key
+    :param value: numerical value
+    """
+    if kw_store.get(key) is None:
+        kw_store[key] = value
+    kw_store[key] = max(kw_store.get(key), value)
+
+
+def rec_mode_min(kw_store: dict[str, int | float], key: str, value: int | float) -> None:
+    """Stores the minimum of all occurring values
+
+    :param kw_store: The global KeeWee repository
+    :param key: a string key
+    :param value: numerical value
+    """
+    if kw_store.get(key) is None:
+        kw_store[key] = value
+    kw_store[key] = min(kw_store.get(key), value)
+
+
 RECORD_MODES: dict[str, Callable[..., None]] = {
     "direct": rec_mode_direct,
     "list": rec_mode_list,
     "set": rec_mode_set,
-    "dtv": rec_mode_dtv  # iso-format
+    "dtv": rec_mode_dtv,  # iso-format
+    "sum": rec_mode_sum,
+    "max": rec_mode_max,
+    "min": rec_mode_min,
 }
-
-
-def keewee(initial: Any, name: str | None = None, mode: str = "direct"):
-    if mode != "direct":
-        raise NotImplementedError("Another mode is currently not available for the keewee-hook!")
-    name = name if name else uuid.uuid4().hex
-    rec_mode = RECORD_MODES.get(mode)
-
-    def setter(value):
-        rec_mode(_repo, name, value)
-
-    setter(initial)
-
-    class IntProxy(int):
-        def __new__(cls, value, *args, **kwargs):
-            return super(cls, cls).__new__(cls, _repo.get(name))
-
-        def __int__(self):
-            return _repo.get(name)
-
-        def __repr__(self) -> str:
-            return f"{int(self)}"
-
-        def __eq__(self, __o: object) -> bool:
-            return int(self) == __o
-
-    match initial:
-        case int():
-            return IntProxy(initial), setter
 
 
 class KeeWee:
     """KeeWee implements the descriptor-protocol and hooks into a specific
     recording method for keeping the state
     """
-    _repo = _repo
+    _repo = KEEWEE_REPO
 
     def __init__(self, mode: str = "list", blame: bool = False):
         self.blame = blame
@@ -168,3 +175,32 @@ class KeeWee:
     @classmethod
     def dumpd(cls):
         return cls._repo
+
+
+def keewee(initial: Any, name: str | None = None, mode: str = "direct"):
+    if mode != "direct":
+        raise NotImplementedError("Another mode is currently not available for the keewee-hook!")
+    name = name if name else uuid.uuid4().hex
+    rec_mode = RECORD_MODES.get(mode)
+
+    def setter(value):
+        rec_mode(KEEWEE_REPO, name, value)
+
+    setter(initial)
+
+    class IntProxy(int):
+        def __new__(cls, value, *args, **kwargs):
+            return super(cls, cls).__new__(cls, KEEWEE_REPO.get(name))
+
+        def __int__(self):
+            return KEEWEE_REPO.get(name)
+
+        def __repr__(self) -> str:
+            return f"{int(self)}"
+
+        def __eq__(self, __o: object) -> bool:
+            return int(self) == __o
+
+    match initial:
+        case int():
+            return IntProxy(initial), setter

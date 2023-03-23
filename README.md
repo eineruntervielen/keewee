@@ -43,7 +43,7 @@ if __name__ == "__main__":
 }
 ```
 
-## Record Modes
+## Collection Record Modes
 
 When assigning a KeeWee instance to an attribute,
 the user can customize its internal recording-behavior by providing the `mode`-option.
@@ -72,7 +72,7 @@ Since this use-case is probably the _most_ common it is also chosen to be the *d
 }
 ```
 
-## Set mode
+### Set mode
 
 The `set`-modes only difference to the list-mode is that duplicates are not tracked.
 
@@ -101,6 +101,29 @@ Here a new dictionary is created for every attribute and the current time is map
     '15:11:44.977002': 9,
     '15:11:44.977004': 7
 }}}}
+````
+
+## Numerical Record Modes
+
+The following record modes only work for numerical values, e.g.`int` or `float` etc.  
+The result will look similar to the `direct`-mode.  
+Currently there are three numerical record modes
+
+1. `sum` the sum of all occurring values
+2. `min` the minimal value that has occurred
+3. `max` the maximum value that has occurred
+
+An example usage for taking the _sum_ over all values could look like the following.
+```python
+@dataclass
+class PokemonTrainer:
+    name: str
+    skill_level: int | KeeWee = field(default=KeeWee(mode='sum'), repr=False)
+```
+````python
+{
+    'PokemonTrainer': {'skill_level': {"PokemonTrainer(name='Ash Ketchum')": 49}}
+}
 ````
 
 ## Links
