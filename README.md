@@ -1,7 +1,7 @@
 # KeeWee 🥝
 
 Global application **state management** and **recording**.  
-The Keewee library implements an auxiliary class that can be used to manage class and instance attributes at runtime.  
+The Keewee library implements an auxiliary class that can be used to track values assigned to class and instance variables at runtime.  
 One major usecase is to decouple your state-management from your business-logic
 and keep your code nice and concise.  
 You can also use it to record statistics about an attribute during runtime.  
@@ -114,12 +114,14 @@ Currently there are three numerical record modes
 3. `max` the maximum value that has occurred
 
 An example usage for taking the _sum_ over all values could look like the following.
+
 ```python
 @dataclass
 class PokemonTrainer:
     name: str
     skill_level: int | KeeWee = field(default=KeeWee(mode='sum'), repr=False)
 ```
+
 ````python
 {
     'PokemonTrainer': {'skill_level': {"PokemonTrainer(name='Ash Ketchum')": 49}}
