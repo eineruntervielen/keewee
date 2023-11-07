@@ -79,7 +79,8 @@ def rec_mode_sum(kw_store: dict[str, int | float], key: str, value: int | float)
     """
     if kw_store.get(key) is None:
         kw_store[key] = value
-    kw_store[key] += value
+    else:
+        kw_store[key] += value
 
 
 def rec_mode_max(kw_store: dict[str, int | float], key: str, value: int | float) -> None:
