@@ -1,1 +1,1 @@
-from .keewee import KeeWee
+from src.keewee.keewee import KeeWee

@@ -1,10 +1,10 @@
 import unittest
 
-from src.keewee import KeeWee
+from keewee.keewee import KeeWee
 
 
 class Employee:
-    skill_level = KeeWee(mode="list")
+    skill_level = KeeWee(mode="max")
     kids = KeeWee(mode="dtv")
 
     def __init__(self, name: str, skill_level: int):

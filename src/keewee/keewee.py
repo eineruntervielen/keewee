@@ -1,16 +1,11 @@
 """Implements an autovivification dictionary for global state recording and management"""
 from __future__ import annotations
+
 import datetime as dt
-import functools
 import inspect
 import json
-import statistics
-import uuid
-
 from pprint import pp
-from typing import overload, cast, Any, Callable, TypeAlias
-
-ISOFormat: TypeAlias = str
+from typing import Any, Callable, cast, overload
 
 
 class KeeWeeRepo(dict):
@@ -97,15 +92,13 @@ def rec_mode_mean_closure() -> Callable[[dict[str, Any], str, Any], None]:
         if not kw_store.get(key):
             kw_store[key] = value
         old_value = kw_store[key] * (index)
-        # print(f"{old_value=}")
-        # print(f"{index=}")
         kw_store[key] = (old_value + value) / index
         index += 1
 
     return rec_mode_mean
 
 
-def rec_mode_dtv(kw_store: dict[str, dict[ISOFormat, Any]], key: str, value: Any) -> None:
+def rec_mode_dtv(kw_store: dict[str, dict[str, Any]], key: str, value: Any) -> None:
     """Collects the occurring values in dictionary that maps the current timestamp
     in ISO-format to the new value
 
@@ -229,32 +222,3 @@ class KeeWee:
     @classmethod
     def dumpd(cls):
         return cls._repo
-
-
-def keewee(initial: Any, name: str | None = None, mode: str = "direct"):
-    if mode != "direct":
-        raise NotImplementedError("Another mode is currently not available for the keewee-hook!")
-    name = name if name else uuid.uuid4().hex
-    rec_mode = DISPATCH_MODE.get(mode)
-
-    def setter(value):
-        rec_mode(KEEWEE_REPO, name, value)
-
-    setter(initial)
-
-    class IntProxy(int):
-        def __new__(cls, value, *args, **kwargs):
-            return super(cls, cls).__new__(cls, KEEWEE_REPO.get(name))
-
-        def __int__(self):
-            return KEEWEE_REPO.get(name)
-
-        def __repr__(self) -> str:
-            return f"{int(self)}"
-
-        def __eq__(self, __o: object) -> bool:
-            return int(self) == __o
-
-    match initial:
-        case int():
-            return IntProxy(initial), setter

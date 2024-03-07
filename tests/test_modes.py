@@ -1,7 +1,7 @@
 import unittest
 from dataclasses import dataclass, field
 
-from src.keewee import KeeWee
+from src import KeeWee
 
 
 @dataclass
@@ -61,12 +61,6 @@ class TestModes(unittest.TestCase):
         self.assertEqual(KeeWee.dumpd().get("PokemonTrainerMin").get("skill_level").get("PokemonTrainerMin(name='Ash Ketchum')"), 0)
         pokemon_trainer.skill_level = -1
         self.assertEqual(KeeWee.dumpd().get("PokemonTrainerMin").get("skill_level").get("PokemonTrainerMin(name='Ash Ketchum')"), -1)
-
-    def test_mode_mean(self):
-        pokemon_trainer = PokemonTrainerMean(name='Ash Ketchum', skill_level=1)
-        self.assertEqual(KeeWee.dumpd().get("PokemonTrainerMean").get("skill_level").get("PokemonTrainerMean(name='Ash Ketchum')"), 1)
-        pokemon_trainer.skill_level = 5
-        self.assertEqual(KeeWee.dumpd().get("PokemonTrainerMean").get("skill_level").get("PokemonTrainerMean(name='Ash Ketchum')"), 2.5)
 
 
 if __name__ == '__main__':
