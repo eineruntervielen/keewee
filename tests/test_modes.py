@@ -1,7 +1,7 @@
 import unittest
 from dataclasses import dataclass, field
 
-from src.keewee import KeeWee
+from src import KeeWee
 
 
 @dataclass
@@ -22,7 +22,26 @@ class PokemonTrainerMin:
     skill_level: int | KeeWee = field(default=KeeWee(mode='min'), repr=False)
 
 
+@dataclass
+class PokemonTrainerMean:
+    name: str
+    skill_level: int | KeeWee = field(default=KeeWee(mode='mean'), repr=False)
+
+
+@dataclass
+class PokemonTrainerIdx:
+    name: str
+    skill_level: int | KeeWee = field(default=KeeWee(mode='idx'), repr=False)
+
+
 class TestModes(unittest.TestCase):
+
+    def test_mode_idx(self):
+        pokemon_trainer = PokemonTrainerIdx(name='Ash Ketchum', skill_level=0)
+        pokemon_trainer.skill_level = 4
+        pokemon_trainer.skill_level = 2
+        pokemon_trainer.skill_level = 3
+        self.assertEqual(KeeWee.dumpd().get("PokemonTrainerIdx").get("skill_level").get("PokemonTrainerIdx(name='Ash Ketchum')").get(3), 3)
 
     def test_mode_sum(self):
         pokemon_trainer = PokemonTrainerSum(name='Ash Ketchum', skill_level=1)

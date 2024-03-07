@@ -3,7 +3,7 @@ import unittest
 from dataclasses import dataclass, field
 from random import randint
 
-from src.keewee import KeeWee
+from src import KeeWee
 
 
 @dataclass

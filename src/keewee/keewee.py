@@ -6,9 +6,7 @@ import inspect
 import json
 
 from pprint import pp
-from typing import overload, cast, Any, Callable, TypeAlias
-
-ISOFormat: TypeAlias = str
+from typing import Any, Callable, cast, overload
 
 
 class KeeWeeRepo(dict):
@@ -57,7 +55,51 @@ def rec_mode_list(kw_store: dict[str, list], key: str, value: Any) -> None:
     kw_store[key].append(value)
 
 
-def rec_mode_dtv(kw_store: dict[str, dict[ISOFormat, Any]], key: str, value: Any) -> None:
+def rec_mode_index_closure() -> Callable[[dict[str, Any], str, Any], None]:
+    """Closure for storing the current index"""
+    index = 0
+
+    def rec_mode_index(kw_store: dict[str, Any], key: str, value: Any) -> None:
+        """Collects the occurring values in dictionary that maps the current index
+        the new value
+
+        :param kw_store: The global KeeWee repository
+        :param key: a string key
+        :param value: any value added to a mapping of index to value
+        """
+
+        nonlocal index
+        if not kw_store.get(key):
+            kw_store[key] = {}
+        kw_store[key][index] = value
+        index += 1
+
+    return rec_mode_index
+
+
+def rec_mode_mean_closure() -> Callable[[dict[str, Any], str, Any], None]:
+    """Closure for storing the current index for the calculation of the mean"""
+    index = 1
+    print(NotImplemented)
+
+    def rec_mode_mean(kw_store: dict[str, Any], key: str, value: int | float) -> None:
+        """Calculates the mean of all occurring values
+
+         :param kw_store: The global KeeWee repository
+         :param key: a string key
+         :param value: numerical value
+         """
+        nonlocal index
+        if not kw_store.get(key):
+            kw_store[key] = value
+        old_value = kw_store[key] * (index)
+        kw_store[key] = (old_value + value) / index
+        index += 1
+
+    return rec_mode_mean
+
+
+def rec_mode_dtv(kw_store: dict[str, dict[str, Any]], key: str, value: Any) -> None:
     """Collects the occurring values in dictionary that maps the current timestamp
     in ISO-format to the new value
 
@@ -71,7 +113,7 @@ def rec_mode_dtv(kw_store: dict[str, dict[ISOFormat, Any]], key: str, value: Any
 
 
 def rec_mode_sum(kw_store: dict[str, int | float], key: str, value: int | float) -> None:
-    """Sums al occurring values
+    """Sums all occurring values
 
     :param kw_store: The global KeeWee repository
     :param key: a string key
@@ -107,14 +149,16 @@ def rec_mode_min(kw_store: dict[str, int | float], key: str, value: int | float)
     kw_store[key] = min(kw_store.get(key), value)
 
 
-RECORD_MODES: dict[str, Callable[..., None]] = {
+DISPATCH_MODE: dict[str, Callable[..., None]] = {
     "direct": rec_mode_direct,
+    "dtv": rec_mode_dtv,
+    "idx": rec_mode_index_closure(),
     "list": rec_mode_list,
-    "set": rec_mode_set,
-    "dtv": rec_mode_dtv,  # iso-format
-    "sum": rec_mode_sum,
     "max": rec_mode_max,
+    "mean": rec_mode_mean_closure(),
     "min": rec_mode_min,
+    "set": rec_mode_set,
+    "sum": rec_mode_sum,
 }
 
 
@@ -124,9 +168,10 @@ class KeeWee:
     """
     _repo = KEEWEE_REPO
 
-    def __init__(self, mode: str = "list", blame: bool = False):
+    def __init__(self, mode: str = "list", blame: bool = False, private: bool = False):
         self.blame = blame
-        self.record_mode = RECORD_MODES.get(mode, RECORD_MODES['list'])
+        self.private = private
+        self.record_mode = DISPATCH_MODE.get(mode, DISPATCH_MODE['list'])
         self.public_name = ""
         self.private_name = ""
 
@@ -155,6 +200,10 @@ class KeeWee:
 
     def __get__(self, obj: object | None, obj_type: type[object] | None = None) -> KeeWee | int:
         """Does not seem to change over the mode"""
+        if self.private:
+            calling_member = inspect.stack()[1].function
+            if not hasattr(obj, calling_member):
+                raise ValueError("not allowed")
         if obj is None:
             return self
         return cast(int, obj.__dict__.get(self.private_name))
@@ -166,11 +215,11 @@ class KeeWee:
     @classmethod
     def dump(cls, file_name: str):
         with open(file_name, "w", encoding="utf-8") as f:
-            json.dump(cls._repo, f)
+            json.dump(cls._repo, f, default=str)
 
     @classmethod
     def dumps(cls):
-        return json.dumps(cls._repo)
+        return json.dumps(cls._repo, default=str)
 
     @classmethod
     def dumpd(cls):
